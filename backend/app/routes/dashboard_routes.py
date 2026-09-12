@@ -61,7 +61,7 @@ def admin(user=Depends(require_role("admin")), db: Session=Depends(get_db)):
         "daily": dict(sorted(daily.items())[-30:]), "scoring_methods": dict(methods),
         "average": round(sum(scores)/len(scores),1) if scores else None,
         "scored_questions": sum(methods.values()), "answered_questions": sum(bool(q.answer_text) for q in questions),
-        "health": {"database": "Connected", "email": "Configured" if smtp_ready() else "SMTP setup required",
+        "health": {"database": "Connected", "email": "Configured" if smtp_ready() else "Email setup required",
             "failed_emails": db.query(Notification).filter_by(email_status="failed").count()},
         "feedback": [{"id": f.id, "name": f.name, "email": f.email,
             "category": f.category, "rating": f.rating, "message": f.message,
@@ -87,7 +87,7 @@ def user_status(user_id: str, data: StatusIn, user=Depends(require_role("admin")
 @router.post("/test-email", status_code=202)
 def test_email(user=Depends(get_current_user), db: Session=Depends(get_db)):
     if not smtp_ready():
-        raise HTTPException(409, "Configure SMTP_HOST and SMTP_FROM in backend/.env, then restart the backend.")
+        raise HTTPException(409, "Configure Gmail API or SMTP email delivery, then restart the backend.")
     pref = preferences(db, user.id)
     if not pref.email_enabled or not pref.session_alerts_enabled:
         raise HTTPException(409, "Enable email notifications and session alerts first.")

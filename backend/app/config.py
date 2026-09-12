@@ -14,7 +14,13 @@ load_dotenv()
 
 
 class Settings:
-    # Module 9: optional SMTP delivery. TLS is always used.
+    # Module 9 email delivery. Gmail API uses HTTPS, so it works on hosts
+    # whose free tier blocks outbound SMTP ports. SMTP remains as a local or
+    # paid-host fallback.
+    GMAIL_CLIENT_ID = os.getenv("GMAIL_CLIENT_ID", "")
+    GMAIL_CLIENT_SECRET = os.getenv("GMAIL_CLIENT_SECRET", "")
+    GMAIL_REFRESH_TOKEN = os.getenv("GMAIL_REFRESH_TOKEN", "")
+    GMAIL_FROM = os.getenv("GMAIL_FROM", "")
     SMTP_HOST = os.getenv("SMTP_HOST", "")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     SMTP_FROM = os.getenv("SMTP_FROM", "")

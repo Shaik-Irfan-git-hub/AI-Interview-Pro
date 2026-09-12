@@ -1,15 +1,21 @@
-"""Durable inbox and SMTP outbox. No mail is sent unless a user opts in."""
+"""Durable inbox and email outbox. No notification mail is sent without opt-in."""
+import base64
 import logging
 import smtplib
 import ssl
+import threading
+import time
 from datetime import datetime, timedelta
 from email.message import EmailMessage
+import httpx
 from sqlalchemy import or_
 from app.config import settings
 from app.models import User, Interview, InterviewStatusEnum, InterviewShareConsent, ShareStatusEnum
 from app.module9_models import Notification, NotificationPreference, InterviewReminder
 
 log = logging.getLogger(__name__)
+_gmail_token = {"value": "", "expires_at": 0.0}
+_gmail_token_lock = threading.Lock()
 
 
 def preferences(db, user_id):
@@ -23,7 +29,61 @@ def preferences(db, user_id):
 
 
 def smtp_ready():
-    return bool(settings.SMTP_HOST and settings.SMTP_FROM)
+    """Backward-compatible name used by routes and existing tests."""
+    gmail_ready = bool(
+        settings.GMAIL_CLIENT_ID
+        and settings.GMAIL_CLIENT_SECRET
+        and settings.GMAIL_REFRESH_TOKEN
+        and settings.GMAIL_FROM
+    )
+    return gmail_ready or bool(settings.SMTP_HOST and settings.SMTP_FROM)
+
+
+def _gmail_access_token():
+    now = time.time()
+    with _gmail_token_lock:
+        if _gmail_token["value"] and _gmail_token["expires_at"] > now + 60:
+            return _gmail_token["value"]
+        response = httpx.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "client_id": settings.GMAIL_CLIENT_ID,
+                "client_secret": settings.GMAIL_CLIENT_SECRET,
+                "refresh_token": settings.GMAIL_REFRESH_TOKEN,
+                "grant_type": "refresh_token",
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        _gmail_token["value"] = payload["access_token"]
+        _gmail_token["expires_at"] = now + int(payload.get("expires_in", 3600))
+        return _gmail_token["value"]
+
+
+def _send_via_gmail_api(message):
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii").rstrip("=")
+    response = httpx.post(
+        "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        headers={"Authorization": f"Bearer {_gmail_access_token()}"},
+        json={"raw": raw},
+        timeout=10,
+    )
+    response.raise_for_status()
+
+
+def _deliver_message(message):
+    if settings.GMAIL_CLIENT_ID and settings.GMAIL_CLIENT_SECRET \
+            and settings.GMAIL_REFRESH_TOKEN and settings.GMAIL_FROM:
+        _send_via_gmail_api(message)
+        return
+    connection = smtplib.SMTP_SSL if settings.SMTP_SSL else smtplib.SMTP
+    with connection(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as client:
+        if not settings.SMTP_SSL:
+            client.starttls(context=ssl.create_default_context())
+        if settings.SMTP_USERNAME:
+            client.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+        client.send_message(message)
 
 
 def enabled(pref, kind):
@@ -93,23 +153,17 @@ def collect_events(db, now=None):
 
 def send_email(recipient, title, body):
     message = EmailMessage()
-    message["From"] = settings.SMTP_FROM
+    message["From"] = settings.GMAIL_FROM or settings.SMTP_FROM
     message["To"] = recipient
     message["Subject"] = "AI Interview Pro — " + title
     message.set_content(body + "\n\nSign in to AI Interview Pro to view your notifications.")
-    connection = smtplib.SMTP_SSL if settings.SMTP_SSL else smtplib.SMTP
-    with connection(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as client:
-        if not settings.SMTP_SSL:
-            client.starttls(context=ssl.create_default_context())
-        if settings.SMTP_USERNAME:
-            client.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-        client.send_message(message)
+    _deliver_message(message)
 
 
 def send_password_reset_email(recipient, code):
     """Send a transactional security code regardless of notification opt-in."""
     message = EmailMessage()
-    message["From"] = settings.SMTP_FROM
+    message["From"] = settings.GMAIL_FROM or settings.SMTP_FROM
     message["To"] = recipient
     message["Subject"] = "AI Interview Pro - password reset code"
     message.set_content(
@@ -118,13 +172,7 @@ def send_password_reset_email(recipient, code):
         "This code expires in 10 minutes and can be used only once. "
         "If you did not request a password reset, ignore this email."
     )
-    connection = smtplib.SMTP_SSL if settings.SMTP_SSL else smtplib.SMTP
-    with connection(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as client:
-        if not settings.SMTP_SSL:
-            client.starttls(context=ssl.create_default_context())
-        if settings.SMTP_USERNAME:
-            client.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-        client.send_message(message)
+    _deliver_message(message)
 
 
 def deliver_pending(db, now=None, sender=None):
@@ -146,7 +194,7 @@ def deliver_pending(db, now=None, sender=None):
             sender(user.email, item.title, item.body)
             item.email_status = "sent"
         except Exception:
-            # Never expose SMTP credentials/server details to clients.
+            # Never expose provider credentials/server details to clients.
             log.warning("Notification email delivery failed; attempt %s", item.attempts)
             item.email_status = "failed" if item.attempts >= 3 else "pending"
             item.retry_at = now + timedelta(minutes=5 * item.attempts)
