@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Candidate Dashboard | AI Interview Pro</title>
+
+    <link rel="stylesheet" href="candidate.css" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="page-progress" id="pageProgress" aria-hidden="true"></div>
+    <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+    <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-label="Close navigation"></button>
+    <div class="candidate-container">
+      <!-- ================= SIDEBAR ================= -->
+
+      <aside class="candidate-sidebar">
+        <div class="brand">
+          🤖 AI Interview Pro
+
+          <span> Candidate Portal </span>
+        </div>
+
+        <nav>
+          <a href="#overview" class="active"> 🏠 Overview </a>
+
+          <a href="#resume"> 📄 Resume Analysis </a>
+
+          <a href="#interview"> 🎤 Mock Interviews </a>
+
+          <a href="#analytics"> 📊 Performance Analytics </a>
+
+          <a href="#growthInsights"> 📈 Growth Insights </a>
+
+          <a href="#speechEmotion"> 🗣️ Speech &amp; Emotion </a>
+
+          <a href="#history"> 📜 Interview History </a>
+
+          <a href="#recommendations"> 🤖 AI Recommendations </a>
+
+          <a href="#achievements"> 🏆 Achievements </a>
+
+          <a href="notifications.html"> 🔔 Notifications &amp; Reports </a>
+          <a href="#settings"> ⚙ Settings </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button id="logoutBtn">Logout</button>
+        </div>
+      </aside>
+
+      <!-- ================= MAIN CONTENT ================= -->
+
+      <main class="candidate-main">
+        <!-- ================= HEADER ================= -->
+
+        <header class="top-header">
+          <div>
+            <h2 id="welcomeUser">Welcome 👋</h2>
+
+            <p>Improve your interview skills with AI-powered preparation.</p>
+          </div>
+
+          <div class="header-actions">
+            <div class="search-box">🔍 Search</div>
+
+            <div class="notification">🔔</div>
+
+            <div class="profile">👨‍🎓</div>
+          </div>
+        </header>
+
+        <!-- ================= OVERVIEW ================= -->
+
+        <section id="overview" class="section">
+          <div class="section-heading">
+            <h2>Candidate Overview</h2>
+
+            <p>Your interview preparation progress</p>
+          </div>
+
+          <div class="profile-card">
+            <div class="profile-image">👨‍💻</div>
+
+            <div>
+              <h3 id="overviewUser"> </h3>
+
+              <p>Computer Science Engineer</p>
+
+              <p>AI Full Stack Developer Aspirant</p>
+            </div>
+
+            <div class="readiness">
+              <h3 id="statReadiness">-</h3>
+
+              <span> Interview Readiness </span>
+            </div>
+          </div>
+
+          <div class="overview-cards">
+            <div class="overview-card">
+              <div class="icon">📄</div>
+
+              <div>
+                <h3 id="statResumeScore">-</h3>
+
+                <p>Resume Score</p>
+              </div>
+            </div>
+
+            <div class="overview-card">
+              <div class="icon">🎤</div>
+
+              <div>
+                <h3 id="statCompletedInterviews">0</h3>
+
+                <p>Completed Interviews</p>
+              </div>
+            </div>
+
+            <div class="overview-card">
+              <div class="icon">⭐</div>
+
+              <div>
+                <h3 id="statAverageScore">-</h3>
+
+                <p>Average Score</p>
+              </div>
+            </div>
+
+            <div class="overview-card">
+              <div class="icon">🚀</div>
+
+              <div>
+                <h3 id="statSkillGrowth">-</h3>
+
+                <p>Skill Growth</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= MODULE 8: GROWTH INSIGHTS ================= -->
+        <section id="growthInsights" class="section module8-section">
+          <div class="section-heading">
+            <h2>📈 Growth Insights</h2>
+            <p>Evidence-based trends from your completed interviews</p>
+          </div>
+
+          <div class="module8-kpis">
+            <article tabindex="0" data-kpi-help="Your highest overall score across completed interviews."><span>Best score</span><strong id="m8BestScore">-</strong><small>Hover for details</small></article>
+            <article tabindex="0" data-kpi-help="Your most recently completed interview score."><span>Latest score</span><strong id="m8LatestScore">-</strong><small>Hover for details</small></article>
+            <article tabindex="0" data-kpi-help="The difference between your first and latest scored interviews."><span>Growth</span><strong id="m8Growth">-</strong><small>Hover for details</small></article>
+            <article tabindex="0" data-kpi-help="A combined readiness estimate based on saved interview evidence."><span>Readiness</span><strong id="m8Readiness">-</strong><small>Hover for details</small></article>
+          </div>
+
+          <div class="module8-grid">
+            <article class="module8-panel">
+              <div class="panel-title-row trend-panel-heading">
+                <div><h3>Performance trend</h3><p>Your score across completed interviews</p></div>
+                <div class="trend-controls" role="group" aria-label="Trend range">
+                  <button type="button" data-trend-range="5">Last 5</button>
+                  <button type="button" data-trend-range="10">Last 10</button>
+                  <button type="button" data-trend-range="all" class="active">All</button>
+                </div>
+              </div>
+              <div class="trend-chart-wrap">
+                <canvas id="performanceTrendCanvas" height="230" tabindex="0" aria-label="Interview score trend chart. Use left and right arrow keys to inspect scores."></canvas>
+                <div id="trendTooltip" class="trend-tooltip" role="status" aria-live="polite" hidden></div>
+              </div>
+              <p id="trendEmpty" class="module8-empty" hidden>Complete a scored interview to unlock your trend.</p>
+            </article>
+
+            <article class="module8-panel">
+              <div class="panel-title-row"><div><h3>Skill profile</h3><p>Historical category averages</p></div></div>
+              <div id="skillProfileBars" class="skill-profile-bars"></div>
+            </article>
+          </div>
+
+          <article class="module8-panel weak-area-panel">
+            <div class="panel-title-row"><div><h3>🎯 Focus areas</h3><p>Lowest supported averages with practical next steps</p></div></div>
+            <div id="weakAreasGrid" class="weak-areas-grid"></div>
+            <p id="weakAreaNote" class="privacy-note"></p>
+          </article>
+        </section>
+
+        <!-- ================= RESUME ANALYSIS ================= -->
+
+        <section id="resume" class="section">
+          <div class="section-heading">
+            <h2>📄 AI Resume Analysis</h2>
+
+            <p>AI-powered resume evaluation and improvement suggestions</p>
+          </div>
+
+          <!-- ================= RESUME UPLOAD ================= -->
+
+          <div class="upload-resume-card">
+            <div class="upload-icon">📄</div>
+
+            <div class="upload-content">
+              <h3>Upload Your Resume</h3>
+
+              <p>Upload PDF or DOCX file for AI-powered resume analysis</p>
+
+              <input type="file" id="resumeFile" accept=".pdf,.docx" />
+
+              <label for="resumeFile" class="upload-btn"> Choose Resume </label>
+
+              <p id="file-name">No file selected</p>
+
+              <button id="analyzeResume">Analyze Resume 🤖</button>
+
+              <p id="resumeUploadStatus" class="resume-upload-status"></p>
+            </div>
+          </div>
+
+          <div class="resume-container" id="resumeResultsPanel" style="display:none;">
+            <div class="resume-score-card">
+              <h3>Experience</h3>
+
+              <div class="score-circle" id="resumeExperienceCircle">-</div>
+
+              <p id="resumeExperienceLabel">Total years detected</p>
+            </div>
+
+            <div class="resume-details">
+              <div class="resume-item">
+                <div>
+                  <h4>Skills Detected</h4>
+
+                  <p id="resumeSkillsSummaryText">-</p>
+                </div>
+              </div>
+
+              <div class="resume-item">
+                <div>
+                  <h4>Education</h4>
+
+                  <p id="resumeEducationText">-</p>
+                </div>
+              </div>
+
+              <div class="resume-item">
+                <div>
+                  <h4>Work Experience Entries</h4>
+
+                  <p id="resumeWorkExpText">-</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="resume-skills-card" id="resumeSkillsCard" style="display:none;">
+            <h3>✅ Skills Detected From Your Resume (by category)</h3>
+            <div id="resumeSkillsByCategory"></div>
+            <p class="hint">These skills can now be used to generate a targeted technical interview below.</p>
+          </div>
+
+          <div class="suggestion-card" id="resumeSummaryCard" style="display:none;">
+            <h3>🤖 AI Resume Summary</h3>
+            <p id="resumeSummaryText"></p>
+          </div>
+        </section>
+
+        <!-- ================= MOCK INTERVIEW ================= -->
+
+        <section id="interview" class="section">
+          <div class="section-heading">
+            <h2>🎤 AI Mock Interview Room</h2>
+
+            <p>Practice real-world interviews with AI</p>
+          </div>
+
+          <div class="interview-room">
+            <div class="interview-info">
+              <div class="ai-avatar">🤖</div>
+
+              <div>
+                <h2>AI Technical Interview</h2>
+
+                <p>Java Developer Position</p>
+
+                <span> Difficulty: Medium </span>
+              </div>
+            </div>
+
+            <div class="interview-stats">
+              <div>
+                <h3 id="statLastScore">-</h3>
+
+                <p>Last Score</p>
+              </div>
+
+              <div>
+                <h3 id="statQuestionsAnswered">0</h3>
+
+                <p>Questions Answered</p>
+              </div>
+
+              <div>
+                <h3 id="statAverageTime">-</h3>
+
+                <p>Average Time</p>
+              </div>
+            </div>
+
+            <button class="start-interview" id="scrollToSetupBtn">Start New Interview 🚀</button>
+          </div>
+
+          <!-- ================= AI INTERVIEW SETUP ================= -->
+          <div class="ai-interview-setup" id="aiInterviewSetup">
+            <h3>🎯 Configure Your Practice Interview</h3>
+
+            <div class="setup-grid">
+              <div class="setup-field">
+                <label for="setupType">Interview Type</label>
+                <select id="setupType">
+                  <option value="technical">Technical</option>
+                  <option value="hr">HR</option>
+                  <option value="behavioral">Behavioral</option>
+                  <option value="aptitude">Aptitude</option>
+                </select>
+              </div>
+
+              <div class="setup-field">
+                <label for="setupDifficulty">Difficulty</label>
+                <select id="setupDifficulty">
+                  <option value="easy">Easy</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+
+              <div class="setup-field">
+                <label for="setupNumQuestions">Number of Questions</label>
+                <select id="setupNumQuestions">
+                  <option value="3">3 Questions</option>
+                  <option value="5" selected>5 Questions</option>
+                  <option value="10">10 Questions</option>
+                  <option value="20">20 Questions</option>
+                </select>
+              </div>
+
+              <div class="setup-field">
+                <label for="setupDuration">Time Limit</label>
+                <select id="setupDuration">
+                  <option value="0" selected>No time limit</option>
+                  <option value="5">5 minutes</option>
+                  <option value="10">10 minutes</option>
+                  <option value="15">15 minutes</option>
+                  <option value="20">20 minutes</option>
+                  <option value="30">30 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="60">60 minutes</option>
+                </select>
+              </div>
+
+              <div class="setup-field" id="setupDomainWrap">
+                <label for="setupDomain">Domain</label>
+                <input type="text" id="setupDomain" placeholder="e.g. Python, React, General HR" />
+              </div>
+            </div>
+
+            <label class="setup-resume-toggle">
+              <input type="checkbox" id="setupUseResume" />
+              Use my uploaded resume skills instead of typing a domain
+            </label>
+            <p id="setupResumeHint" class="hint">Upload a resume above to enable this.</p>
+
+            <p class="hint">
+              🖥️ Your interview opens in a dedicated full-screen page - camera/mic setup,
+              the timer, and question flow all happen there.
+            </p>
+
+            <p id="setupError" class="form-error"></p>
+
+            <button id="generateInterviewBtn" type="button">Generate Interview 🤖</button>
+          </div>
+        </section>
+
+        <!-- ================= ANALYTICS ================= -->
+
+        <section id="analytics" class="section">
+          <div class="section-heading">
+            <h2>📊 Performance Analytics</h2>
+
+            <p>Track your interview improvement</p>
+          </div>
+
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <h3>Communication</h3>
+
+              <div class="progress-bar">
+                <div class="communication-progress" id="communicationProgressBar"></div>
+              </div>
+
+              <h2 id="communicationScoreText">-</h2>
+            </div>
+
+            <div class="analytics-card">
+              <h3>Technical Skills</h3>
+
+              <div class="progress-bar">
+                <div class="technical-progress" id="technicalProgressBar"></div>
+              </div>
+
+              <h2 id="technicalScoreText">-</h2>
+            </div>
+
+            <div class="analytics-card">
+              <h3>Confidence Level</h3>
+
+              <div class="progress-bar">
+                <div class="confidence-progress" id="confidenceProgressBar"></div>
+              </div>
+
+              <h2 id="confidenceScoreText">-</h2>
+            </div>
+
+            <div class="analytics-card">
+              <h3>Professionalism</h3>
+
+              <div class="progress-bar">
+                <div class="grammar-progress" id="professionalismProgressBar"></div>
+              </div>
+
+              <h2 id="professionalismScoreText">-</h2>
+            </div>
+          </div>
+
+          <p id="analyticsEmptyHint" class="hint" style="display:none;">
+            Complete a mock interview to see your real performance analytics here.
+          </p>
+        </section>
+
+        <!-- ================= MODULE 5 & 6: SPEECH & EMOTION INSIGHTS ================= -->
+
+        <section id="speechEmotion" class="section">
+          <div class="section-heading">
+            <h2>🗣️ Speech &amp; Emotion Insights</h2>
+
+            <p>Real, computed-from-your-recordings analysis of how you spoke and presented yourself</p>
+          </div>
+
+          <h3 class="insights-subheading">🎙️ Speech-to-Text &amp; Communication Analysis</h3>
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <h3>Filler Words</h3>
+              <p class="hint">Avg. per spoken answer</p>
+              <h2 id="statAvgFillerWords">-</h2>
+            </div>
+
+            <div class="analytics-card">
+              <h3>Speaking Pace</h3>
+              <p class="hint">Ideal: 110-160 WPM</p>
+              <h2 id="statAvgPace">-</h2>
+            </div>
+
+            <div class="analytics-card">
+              <h3>Pronunciation Clarity</h3>
+              <div class="progress-bar">
+                <div class="clarity-progress" id="clarityProgressBar"></div>
+              </div>
+              <h2 id="statAvgClarity">-</h2>
+            </div>
+          </div>
+
+          <h3 class="insights-subheading">📷 Emotion Detection &amp; Eye Tracking</h3>
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <h3>Eye Contact</h3>
+              <div class="progress-bar">
+                <div class="eye-contact-progress" id="eyeContactProgressBar"></div>
+              </div>
+              <h2 id="statAvgEyeContact">-</h2>
+            </div>
+
+            <div class="analytics-card">
+              <h3>Attention</h3>
+              <p class="hint">% of time in frame</p>
+              <div class="progress-bar">
+                <div class="attention-progress" id="attentionProgressBar"></div>
+              </div>
+              <h2 id="statAvgAttention">-</h2>
+            </div>
+
+            <div class="analytics-card">
+              <h3>Visual Confidence</h3>
+              <div class="progress-bar">
+                <div class="visual-confidence-progress" id="visualConfidenceProgressBar"></div>
+              </div>
+              <h2 id="statAvgVisualConfidence">-</h2>
+            </div>
+
+            <div class="analytics-card">
+              <h3>Engagement</h3>
+              <div class="progress-bar">
+                <div class="engagement-progress" id="engagementProgressBar"></div>
+              </div>
+              <h2 id="statAvgEngagement">-</h2>
+            </div>
+          </div>
+
+          <p id="speechEmotionEmptyHint" class="hint" style="display:none;">
+            Enable your camera/microphone and speak your answers during a mock interview
+            to see your speech and emotion analysis here.
+          </p>
+        </section>
+
+        <!-- ================= INTERVIEW HISTORY ================= -->
+
+        <section id="history" class="section">
+          <div class="section-heading">
+            <h2>📜 Interview History</h2>
+
+            <p>Review your previous interview performances</p>
+          </div>
+
+          <div class="history-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type / Domain</th>
+
+                  <th>Difficulty</th>
+
+                  <th>Date</th>
+
+                  <th>Questions</th>
+
+                  <th>Score</th>
+
+                  <th>Status</th>
+
+                  <th>Recruiter Access</th>
+                </tr>
+              </thead>
+
+              <tbody id="historyTableBody">
+                <tr><td colspan="7">Loading your interview history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="history-detail-panel" id="historyDetailPanel" style="display:none;">
+            <button id="closeHistoryDetail" type="button" class="close-detail-btn">&times; Close</button>
+            <h3 id="historyDetailTitle"></h3>
+            <p id="historyDetailScore" class="history-detail-score"></p>
+            <div id="historyDetailAssessment" class="module7-assessment"></div>
+
+            <!-- Module 4 - candidate can review their own session recording here -->
+            <div id="historyDetailRecordings" class="history-detail-recordings"></div>
+
+            <div id="historyDetailQA"></div>
+          </div>
+        </section>
+
+        <!-- ================= AI RECOMMENDATIONS ================= -->
+
+        <section id="recommendations" class="section">
+          <div class="section-heading">
+            <h2>🤖 AI Career Coach</h2>
+
+            <p>Personalized improvement recommendations</p>
+          </div>
+
+          <div class="coach-card">
+            <div class="coach-avatar">🤖</div>
+
+            <div>
+              <h2>Your Next Improvement</h2>
+
+              <p>
+                "Practice system design questions and improve your explanation
+                skills to reach advanced interview levels."
+              </p>
+
+              <div class="recommendation-tags">
+                <span> System Design </span>
+
+                <span> Communication </span>
+
+                <span> Problem Solving </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= ACHIEVEMENTS ================= -->
+
+        <section id="achievements" class="section">
+          <div class="section-heading">
+            <h2>🏆 Achievements</h2>
+
+            <p>Your interview preparation milestones</p>
+          </div>
+
+          <div class="achievement-grid">
+            <div class="achievement-card locked" id="achv10Interviews">
+              <div>🔥</div>
+
+              <h3>10+ Interviews</h3>
+
+              <p id="achv10InterviewsText">Complete 10 AI interviews to unlock</p>
+            </div>
+
+            <div class="achievement-card locked" id="achvTopPerformer">
+              <div>⭐</div>
+
+              <h3>Top Performer</h3>
+
+              <p id="achvTopPerformerText">Maintain an average score above 85%</p>
+            </div>
+
+            <div class="achievement-card locked" id="achvSkillGrowth">
+              <div>🚀</div>
+
+              <h3>Skill Growth</h3>
+
+              <p id="achvSkillGrowthText">Improve your score across interviews</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SETTINGS ================= -->
+
+        <section id="settings" class="section">
+          <div class="section-heading">
+            <h2>⚙ Settings</h2>
+
+            <p>Manage your account preferences</p>
+          </div>
+
+          <div class="settings-panel">
+            <div>
+              <label> Email Notifications </label>
+
+              <input type="checkbox" checked />
+            </div>
+
+            <div>
+              <label> AI Interview Reminders </label>
+
+              <input type="checkbox" checked />
+            </div>
+
+            <div>
+              <label> Performance Updates </label>
+
+              <input type="checkbox" />
+            </div>
+
+            <button>Save Settings</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Candidate-controlled sharing modal -->
+    <div id="shareInterviewModal" class="consent-modal" hidden aria-hidden="true">
+      <div class="consent-card" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+        <button id="closeShareModal" class="consent-close" type="button" aria-label="Close">×</button>
+        <div class="consent-icon">🔐</div>
+        <h2 id="shareModalTitle">Share interview securely</h2>
+        <p id="shareInterviewSummary" class="consent-summary"></p>
+
+        <label for="recruiterSearch">Choose one or more verified recruiters</label>
+        <input id="recruiterSearch" type="search" placeholder="Search recruiters by name or email" autocomplete="off">
+        <div class="recruiter-selection-toolbar">
+          <span id="recruiterSelectionCount" aria-live="polite">0 selected</span>
+          <div>
+            <button id="selectVisibleRecruiters" type="button">Select visible</button>
+            <button id="clearRecruiterSelection" type="button">Clear</button>
+          </div>
+        </div>
+        <div id="recruiterOptions" class="recruiter-options"></div>
+
+        <div class="shared-data-box">
+          <h3>What every selected recruiter can view</h3>
+          <div class="data-chip-grid">
+            <span>Questions &amp; answers</span><span>All score breakdowns</span>
+            <span>AI feedback</span><span>Speech analysis</span>
+            <span>Eye contact &amp; engagement</span><span>Session recordings</span>
+            <span>Timing &amp; behavior</span><span>Proctoring flags</span>
+            <span>Latest resume analysis &amp; skills</span>
+          </div>
+        </div>
+
+        <label class="consent-check">
+          <input id="shareConsentCheck" type="checkbox">
+          <span>I understand exactly what will be shared and voluntarily grant access. I can revoke it later.</span>
+        </label>
+        <p id="shareError" class="share-error" role="alert"></p>
+        <div class="consent-actions">
+          <button id="cancelShareBtn" class="secondary-action" type="button">Cancel</button>
+          <button id="confirmShareBtn" class="primary-action" type="button" disabled>Share with selected recruiters</button>
+        </div>
+        <div id="existingShares" class="existing-shares"></div>
+      </div>
+    </div>
+
+    <div id="appToast" class="app-toast" role="status" aria-live="polite"></div>
+    <button id="backToTop" class="back-to-top" type="button" aria-label="Back to top">↑</button>
+
+    <link rel="stylesheet" href="dashboard-tools.css">
+    <link rel="stylesheet" href="dashboard-motion.css">
+    <script src="auth-common.js"></script>
+    <script src="dashboard-tools.js"></script>
+    <script src="candidate.js"></script>
+  </body>
+</html>

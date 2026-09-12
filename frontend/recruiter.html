@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Recruiter Dashboard | AI Interview Pro</title>
+
+    <link rel="stylesheet" href="recruiter.css" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="page-progress" id="pageProgress" aria-hidden="true"></div>
+    <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+    <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-label="Close navigation"></button>
+    <div class="recruiter-container">
+      <!-- ================= SIDEBAR ================= -->
+
+      <aside class="recruiter-sidebar">
+        <div class="brand">
+          🤖 AI Interview Pro
+
+          <span> Recruiter Portal </span>
+        </div>
+
+        <nav>
+          <a href="#overview" class="active"> 🏠 Overview </a>
+
+          <a href="#candidates"> 👥 Candidates </a>
+
+          <a href="#sharedInterviews"> 🔐 Shared Interviews </a>
+
+          <a href="#screening"> 📄 Resume Screening </a>
+
+          <a href="#interviews"> 🎤 Interview Management </a>
+
+          <a href="#analytics"> 📊 Analytics </a>
+
+          <a href="#reports"> 📑 Reports </a>
+
+          <a href="notifications.html"> 🔔 Notifications &amp; Reports </a>
+          <a href="#settings"> ⚙ Settings </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button id="logoutBtn">Logout</button>
+        </div>
+      </aside>
+
+      <!-- ================= MAIN AREA ================= -->
+
+      <main class="recruiter-main">
+        <!-- ================= TOP HEADER ================= -->
+
+        <header class="top-header">
+          <div>
+            <h1 id="welcomeUser">Good Morning, Recruiter 👋</h1>
+
+            <p>Manage candidates and make smarter hiring decisions with AI.</p>
+          </div>
+
+          <div class="header-actions">
+            <div class="search-box">🔍 Search Candidates</div>
+
+            <div class="notification">🔔</div>
+
+            <div class="profile">👨‍💼</div>
+          </div>
+        </header>
+
+        <!-- ================= OVERVIEW ================= -->
+
+        <section id="overview" class="section">
+          <div class="section-heading">
+            <h2>Recruitment Overview</h2>
+
+            <p>Real-time hiring performance</p>
+          </div>
+
+          <div class="overview-cards">
+            <div class="overview-card">
+              <div class="icon">👥</div>
+
+              <div>
+                <h3 id="sharedInterviewCount">0</h3>
+
+                <p>Shared Interviews</p>
+              </div>
+
+              <span class="growth"> Consent only </span>
+            </div>
+
+            <div class="overview-card">
+              <div class="icon">⭐</div>
+
+              <div>
+                <h3 id="sharedCandidateCount">0</h3>
+
+                <p>Shared Candidates</p>
+              </div>
+
+              <span class="growth"> Private </span>
+            </div>
+
+            <div class="overview-card">
+              <div class="icon">🎤</div>
+
+              <div>
+                <h3 id="sharedAverageScore">-</h3>
+
+                <p>Average Score</p>
+              </div>
+
+              <span class="growth"> Live data </span>
+            </div>
+
+            <div class="overview-card">
+              <div class="icon">✅</div>
+
+              <div>
+                <h3 id="sharedTopScore">-</h3>
+
+                <p>Top Shared Score</p>
+              </div>
+
+              <span class="growth"> Live data </span>
+            </div>
+          </div>
+
+          <!-- ================= HIRING PIPELINE ================= -->
+
+          <div class="pipeline-card">
+            <h2>Consent-Safe Review Flow</h2>
+
+            <div class="pipeline">
+              <div>
+                <h3>Completed</h3>
+
+                <span> Candidate finishes interview </span>
+              </div>
+
+              <div class="arrow">→</div>
+
+              <div>
+                <h3>Permission</h3>
+
+                <span> Candidate selects recruiter </span>
+              </div>
+
+              <div class="arrow">→</div>
+
+              <div>
+                <h3>Shared</h3>
+
+                <span> Report becomes available </span>
+              </div>
+
+              <div class="arrow">→</div>
+
+              <div>
+                <h3>Reviewed</h3>
+
+                <span> Recruiter views evidence </span>
+              </div>
+
+              <div class="arrow">→</div>
+
+              <div>
+                <h3>Controlled</h3>
+
+                <span> Candidate may revoke </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= MODULE 8: SHARED INTERVIEWS ================= -->
+        <section id="sharedInterviews" class="section shared-interviews-section">
+          <div class="section-heading shared-heading">
+            <div>
+              <h2>🔐 Candidate-Shared Interviews</h2>
+              <p>Full reports appear only after explicit candidate permission</p>
+            </div>
+            <span class="privacy-pill">Consent protected</span>
+          </div>
+
+          <div class="shared-toolbar">
+            <input id="sharedSearch" type="search" placeholder="Search candidate, email or domain">
+            <select id="sharedTypeFilter"><option value="">All types</option><option value="technical">Technical</option><option value="hr">HR</option><option value="behavioral">Behavioral</option><option value="aptitude">Aptitude</option></select>
+            <select id="sharedDifficultyFilter"><option value="">All difficulties</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select>
+            <select id="sharedSort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="highest">Highest score</option><option value="lowest">Lowest score</option></select>
+            <button id="clearSharedFilters" type="button">Clear</button>
+          </div>
+          <p id="sharedResultsStatus" class="shared-results-status">Loading authorized interviews…</p>
+          <div id="sharedInterviewGrid" class="shared-interview-grid"></div>
+
+          <div class="ranking-panel">
+            <div class="panel-title-row"><div><h3>🏆 Consent-scoped candidate ranking</h3><p>Only candidates who shared interviews with you are included</p></div></div>
+            <div class="ranking-table-wrap"><table class="ranking-table"><thead><tr><th>Rank</th><th>Candidate</th><th>Shared</th><th>Average</th><th>Best</th><th>Technical</th><th>Communication</th><th>Trend</th></tr></thead><tbody id="rankingTableBody"></tbody></table></div>
+          </div>
+        </section>
+
+        <!-- ================= CANDIDATE MANAGEMENT ================= -->
+
+        <section id="candidates" class="section">
+          <div class="section-heading">
+            <h2>Candidate Management</h2>
+
+            <p>Top mock-interview scorers across all candidates</p>
+          </div>
+
+          <p id="candidatesStatus" class="hint">Loading candidates...</p>
+
+          <div class="candidate-grid" id="candidatesGrid"></div>
+        </section>
+
+        <!-- ================= RESUME SCREENING ================= -->
+
+        <section id="screening" class="section">
+          <div class="section-heading">
+            <h2>AI Resume Screening</h2>
+
+            <p>Candidates ranked by resume completeness score</p>
+          </div>
+
+          <p id="screeningStatus" class="hint">Loading resumes...</p>
+          <button type="button" id="refreshResumeScreening" class="skill-view-btn">Refresh resumes</button>
+
+          <div class="screening-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Candidate</th>
+                  <th>Top Skills</th>
+                  <th>AI Score</th>
+                  <th>Experience</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody id="screeningTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+        
+
+
+
+
+
+
+<!-- ================= INTERVIEW MANAGEMENT ================= -->
+
+
+<section id="interviews" class="section">
+
+
+
+<div class="section-heading">
+
+
+<h2>
+🎤 Interview Management
+</h2>
+
+
+<p>
+Schedule and monitor upcoming interviews
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="interview-grid">
+
+
+
+
+
+<div class="interview-card">
+
+
+<div class="date-box">
+
+01
+
+<span>
+AUG
+</span>
+
+</div>
+
+
+
+<div>
+
+
+<h3>
+Rahul Sharma
+</h3>
+
+
+<p>
+Java Developer Interview
+</p>
+
+
+<span>
+⏰ 10:30 AM
+</span>
+
+
+</div>
+
+
+
+<div class="status upcoming">
+
+Upcoming
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="interview-card">
+
+
+<div class="date-box">
+
+03
+
+<span>
+AUG
+</span>
+
+</div>
+
+
+
+<div>
+
+
+<h3>
+Priya Kumar
+</h3>
+
+
+<p>
+Machine Learning Engineer
+</p>
+
+
+<span>
+⏰ 2:00 PM
+</span>
+
+
+</div>
+
+
+
+<div class="status upcoming">
+
+Upcoming
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="interview-card">
+
+
+<div class="date-box">
+
+05
+
+<span>
+AUG
+</span>
+
+</div>
+
+
+
+<div>
+
+
+<h3>
+Arjun Patel
+</h3>
+
+
+<p>
+Full Stack Developer
+</p>
+
+
+<span>
+⏰ 11:00 AM
+</span>
+
+
+</div>
+
+
+
+<div class="status completed">
+
+Completed
+
+</div>
+
+
+
+</div>
+
+
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- ================= ANALYTICS ================= -->
+
+
+<section id="analytics" class="section">
+
+
+
+<div class="section-heading">
+
+
+<h2>
+📊 Shared Portfolio Analytics
+</h2>
+
+
+<p>
+Calculated only from interviews candidates shared with you
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="analytics-container">
+
+
+
+
+
+<div class="analytics-card">
+
+
+<h3>
+Authorized Coverage
+</h3>
+
+
+<div class="big-number" id="analyticsCoverage">
+
+-
+
+</div>
+
+
+<p>
+Number of candidates represented
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="analytics-card">
+
+
+<h3>
+Average Improvement
+</h3>
+
+
+<div class="big-number" id="analyticsGrowth">
+
+-
+
+</div>
+
+
+<p>
+Across candidates with multiple shared interviews
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="analytics-card">
+
+
+<h3>
+Strongest Dimension
+</h3>
+
+
+<div class="big-number" id="analyticsStrongest">
+
+-
+
+</div>
+
+
+<p>
+Based on consented score evidence
+
+</p>
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="chart-placeholder">
+
+
+<h3>
+Shared Interview Skill Profile
+</h3>
+
+
+
+<div class="bars">
+
+
+<div>
+
+<span>
+Technical
+</span>
+
+<div class="bar software" id="portfolioTechnicalBar"></div>
+
+</div>
+
+
+
+
+<div>
+
+<span>
+Communication
+</span>
+
+<div class="bar data" id="portfolioCommunicationBar"></div>
+
+</div>
+
+
+
+
+
+<div>
+
+<span>
+Overall
+</span>
+
+<div class="bar cloud" id="portfolioOverallBar"></div>
+
+</div>
+
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- ================= REPORTS ================= -->
+
+
+<section id="reports" class="section">
+
+
+
+<div class="section-heading">
+
+
+<h2>
+📑 Reports
+</h2>
+
+
+<p>
+Generate detailed recruitment reports
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="report-grid">
+
+
+
+
+
+<div class="report-card">
+
+
+<h3>
+Candidate Report
+
+</h3>
+
+
+<p>
+Complete candidate evaluation summary.
+
+</p>
+
+
+
+<button>
+
+Generate
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="report-card">
+
+
+<h3>
+Interview Report
+
+</h3>
+
+
+<p>
+Interview performance and feedback.
+
+</p>
+
+
+
+<button>
+
+Generate
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="report-card">
+
+
+<h3>
+Hiring Report
+
+</h3>
+
+
+<p>
+Overall recruitment analysis.
+
+</p>
+
+
+
+<button>
+
+Generate
+
+</button>
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- ================= SETTINGS ================= -->
+
+
+<section id="settings" class="section">
+
+
+
+<div class="section-heading">
+
+
+<h2>
+⚙ Settings
+</h2>
+
+
+<p>
+Manage recruiter preferences
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="settings-panel">
+
+
+
+<div>
+
+<label>
+Email Notifications
+</label>
+
+
+<input type="checkbox" checked>
+
+
+</div>
+
+
+
+
+
+<div>
+
+<label>
+AI Recommendation Alerts
+</label>
+
+
+<input type="checkbox" checked>
+
+
+</div>
+
+
+
+
+
+<div>
+
+<label>
+Candidate Updates
+</label>
+
+
+<input type="checkbox">
+
+
+</div>
+
+
+
+
+
+<button>
+
+Save Settings
+
+</button>
+
+
+
+
+</div>
+
+
+
+
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- ================= CANDIDATE PROFILE MODAL (Module 4 - View Profile) ================= -->
+<div class="profile-modal-overlay" id="candidateProfileOverlay" style="display:none;">
+  <div class="profile-modal">
+    <button id="closeCandidateProfileBtn" type="button" class="profile-modal-close">&times;</button>
+
+    <div id="candidateProfileContent">
+      <p class="hint">Loading profile...</p>
+    </div>
+  </div>
+</div>
+
+<div class="profile-modal-overlay shared-report-overlay" id="sharedReportOverlay" style="display:none;">
+  <div class="profile-modal shared-report-modal" role="dialog" aria-modal="true" aria-labelledby="sharedReportTitle">
+    <button id="closeSharedReportBtn" type="button" class="profile-modal-close">&times;</button>
+    <div id="sharedReportContent"><p class="hint">Loading authorized report…</p></div>
+  </div>
+</div>
+
+<div id="recruiterToast" class="recruiter-toast" role="status" aria-live="polite"></div>
+<button id="backToTop" class="back-to-top" type="button" aria-label="Back to top">↑</button>
+
+
+</main>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+    <link rel="stylesheet" href="dashboard-tools.css">
+    <link rel="stylesheet" href="dashboard-motion.css">
+    <script src="auth-common.js"></script>
+    <script src="dashboard-tools.js"></script>
+<script src="recruiter.js"></script>
+
+
+</body>
+
+
+</html>

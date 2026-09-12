@@ -1,0 +1,515 @@
+# AI Interview Pro — Module 9 Dashboard Update
+
+## Secure forgot-password recovery
+
+The login screen now provides a complete three-step recovery flow for every
+active local-password account:
+
+1. Enter the registered email and request a six-digit verification code.
+2. Verify the one-time code within 10 minutes.
+3. Set and confirm a new password, then return to login.
+
+Recovery email uses the existing `SMTP_*` settings in `backend/.env`. Codes and
+reset tokens are stored only as secure hashes, requests are rate-limited, five
+incorrect attempts lock the code, and a successful reset invalidates previously
+issued login tokens. The API deliberately returns the same request message for
+known and unknown addresses so it does not expose registered accounts. Google-only
+accounts continue to use Google Sign-In. The recovery dialog includes direct
+actions for Google Sign-In and Google's own account-recovery page; this application
+never attempts to reset a password managed by Google.
+
+Existing PostgreSQL databases are upgraded automatically when the backend starts.
+Fresh databases can also be created from `backend/sql/create_db.sql`.
+
+Dashboard controls, notifications, reports and email preferences are included in
+the application. Retain your existing PostgreSQL database, backend `.env`, and
+media folder when upgrading.
+
+## Module 8 - Consent, Dashboard & Analytics
+
+This build adds a privacy-safe handoff from candidate practice to recruiter review.
+A completed interview is invisible to recruiters until the candidate selects a
+specific recruiter, reviews the disclosure, checks the consent box, and confirms.
+The candidate can revoke access at any time; the backend immediately blocks the
+report and its recordings.
+
+### Candidate experience
+
+- `Share with Recruiter` and `Manage Access` actions on completed interviews.
+- Searchable recruiter picker, explicit disclosure, consent checkbox, access history,
+  instant revoke, responsive modal, feedback toasts, and empty/error states.
+- Best/latest/readiness/growth KPIs, score trend chart, skill averages, and actionable
+  weak-area insights with a minimum evidence threshold.
+- No placeholder analytics: insufficient evidence is shown as unavailable.
+
+### Recruiter experience
+
+- `Shared Interviews` workspace containing only actively authorized reports.
+- Search, type/difficulty filters, sorting, live summary metrics, and consent badges.
+- Report tabs for overview, questions and answers, AI feedback, communication,
+  behavior/proctoring signals, and protected recordings.
+- Candidate rankings by average, best, technical, communication, and improvement;
+  only candidates who shared with that recruiter are included.
+
+### Privacy and authorization
+
+- New `interview_share_consents` audit table with active/revoked states.
+- Ownership, completed-interview, active-recruiter, duplicate-share, and
+  cross-recruiter checks are enforced in FastAPI.
+- Recruiter candidate/profile/session endpoints are consent-aware.
+- Recordings are no longer exposed through a public `/media` mount. They stream from
+  `GET /sessions/{session_id}/recordings/{recording_id}/stream` after authorization.
+- Resume details remain admin-only; interview consent does not silently expose a CV.
+
+### New API endpoints
+
+| Method | Endpoint | Role | Purpose |
+| --- | --- | --- | --- |
+| GET | `/sharing/recruiters` | Candidate | List active recruiters |
+| GET | `/interviews/{id}/shares` | Candidate | Review access history |
+| POST | `/interviews/{id}/shares` | Candidate | Grant explicit access |
+| DELETE | `/interviews/{id}/shares/{share_id}` | Candidate | Revoke access |
+| GET | `/analytics/dashboard` | Candidate | Module 8 analytics dataset |
+| GET | `/recruiter/shared-interviews` | Recruiter | Filter authorized interviews |
+| GET | `/recruiter/shared-interviews/{id}` | Recruiter | Full authorized report |
+| GET | `/recruiter/rankings` | Recruiter | Consent-scoped rankings |
+
+### Database upgrade
+
+```bash
+psql -U postgres -d AI_Interview_Pro -f backend/sql/module8_migration.sql
+```
+
+Fresh installations can use `backend/sql/create_db.sql`.
+
+### Tests
+
+```bash
+cd backend
+python -m pytest -q
+```
+
+### Demonstration
+
+1. Register a candidate and recruiter.
+2. Complete an interview as the candidate.
+3. Open Interview History and select `Share with Recruiter`.
+4. Select the recruiter, review the disclosure, check consent, and confirm.
+5. Log in as the recruiter and open `Shared Interviews`.
+6. Revoke access as the candidate; the recruiter immediately loses report and media access.
+
+---
+
+This package adds a complete **FastAPI + PostgreSQL** authentication backend
+to your existing AI Interview Platform frontend, without redesigning any UI.
+
+```
+AI-Interview-Pro/
+├── backend/                 ← NEW: FastAPI backend
+│   ├── app/
+│   │   ├── main.py          FastAPI app entrypoint
+│   │   ├── database.py      SQLAlchemy engine/session
+│   │   ├── models.py        User ORM model
+│   │   ├── schemas.py       Pydantic request/response models
+│   │   ├── auth.py          JWT create/verify + route protection
+│   │   ├── oauth.py         Google OAuth client (Authlib)
+│   │   ├── config.py        Loads all settings from .env
+│   │   ├── utils.py         bcrypt password hashing helpers
+│   │   └── routes/
+│   │       ├── auth_routes.py   /register /login /me /logout /verify-token /auth/google...
+│   │       └── user_routes.py   /candidate/profile /recruiter/profile /admin/profile
+│   ├── sql/create_db.sql    Manual SQL setup script (optional — SQLAlchemy also auto-creates the table)
+│   ├── requirements.txt
+│   └── .env.example
+│
+└── frontend/                 ← YOUR EXISTING FRONTEND (only lightly touched)
+    ├── index.html            + <script src="auth-common.js"> added
+    ├── candidate.html        + auth-common.js script tag + id="logoutBtn"
+    ├── recruiter.html        + auth-common.js script tag + id="welcomeUser" + id="logoutBtn"
+    ├── admin.html            + auth-common.js script tag + id="welcomeUser" + id="logoutBtn"
+    ├── auth-common.js        NEW: shared session/auth helper functions
+    ├── script.js             MODIFIED: login/register/Google buttons now call the real API
+    ├── candidate.js          MODIFIED: added a 2-line auth guard at the top
+    ├── recruiter.js          MODIFIED: added a 2-line auth guard at the top
+    ├── admin.js              MODIFIED: added a 2-line auth guard at the top
+    └── (all other files, all CSS, all other HTML/JS) — UNTOUCHED
+```
+
+No existing HTML layout, CSS, or visual design was changed. See
+**"Exact Frontend Changes"** below for a line-by-line account of every edit.
+
+---
+
+## 1. Prerequisites
+
+* Python 3.10+
+* PostgreSQL 13+ installed and running
+* A Google Cloud project (for Google Sign-In)
+* A simple static file server for the frontend (e.g. VS Code "Live Server",
+  or `python -m http.server 5500`)
+
+---
+
+## 2. PostgreSQL Setup
+
+**Option A — Let the backend create the table automatically (easiest):**
+Just create the empty database, the backend does the rest on first run.
+
+```bash
+psql -U postgres -c 'CREATE DATABASE "AI_Interview_Pro";'
+```
+
+**Option B — Run the provided SQL script manually:**
+
+```bash
+psql -U postgres -f backend/sql/create_db.sql
+```
+
+---
+
+## 3. Backend Setup
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+pip install -r requirements.txt
+
+cp .env.example .env
+# now open .env and fill in:
+#   DATABASE_URL          (your postgres password/host)
+#   JWT_SECRET_KEY         -> generate with: openssl rand -hex 32
+#   SESSION_SECRET_KEY     -> generate with: openssl rand -hex 32
+#   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET  (see section 5 below)
+#   FRONTEND_URL           (the URL your frontend is served from)
+#   CORS_ORIGINS           (same as FRONTEND_URL)
+
+uvicorn app.main:app --reload --port 8000
+```
+
+The API is now live at **http://127.0.0.1:8000**
+Interactive API docs (auto-generated by FastAPI): **http://127.0.0.1:8000/docs**
+
+**Module 6 (CNN + RNN interview behavior analysis)** ships with trained
+RNN weights already committed at `backend/app/ml/weights/engagement_rnn.npz`,
+so there's nothing extra to run. If you ever want to retrain it (e.g.
+after tweaking the synthetic data generator, or once you have real
+labeled session data to plug in instead):
+
+```bash
+cd backend
+python -m app.ml.train_engagement_rnn
+```
+
+---
+
+## 3b. Module 6 — CNN + RNN Interview Behavior Analysis
+
+Two-stage pipeline, split across the browser and the backend:
+
+| Stage | Where | What | File |
+|---|---|---|---|
+| **CNN** | Browser | face-api.js (TinyFaceDetector, FaceLandmark68TinyNet, FaceExpressionNet — genuine convolutional models, running via TensorFlow.js against your own webcam feed) turns each video frame into a small numeric "tick": face found?, eye contact?, eye openness (EAR), gaze offset, expression-derived confidence, multiple faces? | `frontend/interview-session.js` |
+| **RNN** | Backend | A from-scratch NumPy Elman RNN (forward + BPTT + Adam — no PyTorch/TensorFlow dependency) looks at how the last ~30s of those ticks evolve and outputs an engagement score, a disengagement-risk score, and an integrity-risk score, plus confirms proctoring flags (eye contact missing / no face / multiple faces) once they've persisted for a few consecutive ticks | `backend/app/ml/rnn.py`, `engagement_engine.py` |
+
+**Only numbers ever leave the browser for this feature — never an image
+or video frame** (same privacy guarantee as the rest of Module 6, see
+section 9). The CNN models process pixels locally; only the resulting
+6-number tick vector is posted to `POST /sessions/{id}/engagement-ticks`.
+
+**Why synthetic training data:** no labeled real-interview attention
+dataset exists for this project to train on. `train_engagement_rnn.py`
+bootstraps the RNN on programmatically generated sequences for four
+behavior archetypes (engaged / distracted / absent / multiple-people),
+each sampled from simple, documented rules — see that file's docstring.
+This is a standard way to get a working sequence model before real
+labeled data is available; swap the data generator for a real loader
+once you have reviewer-labeled sessions.
+
+**Eye contact missing warning:** the candidate sees an instant on-screen
+banner after a few consecutive ticks without eye contact (client-side,
+for fast feedback), while the RNN's server-confirmed reading of the
+same signal drives a "Proctoring Flags" counter recruiters can review —
+it's informational, and never auto-submits the interview.
+
+**Pre-interview readiness check:** before the interview begins, a clean,
+responsive setup screen groups camera, microphone, speaker, face visibility,
+lighting, network, browser and full-screen checks. Device permission is only
+requested after the candidate clicks the enable button. Required consent and
+clear recovery guidance are shown without exposing implementation jargon.
+
+## 3c. Module 7 — AI Feedback & Scoring
+
+Module 7 uses the document's required weighted formula:
+
+| Category | Weight |
+|---|---:|
+| Communication | 30% |
+| Confidence | 25% |
+| Technical relevance | 30% |
+| Professionalism | 15% |
+
+Grammar remains visible as a communication sub-score, but it is not a fifth
+weighted category. Speech metrics are included only for spoken answers, and
+camera/behavior metrics are included only when real samples exist. Missing
+optional inputs are returned as `null` and listed in `missing_data`; they are
+never replaced with invented values. Full-screen violations have a documented
+professionalism penalty capped at 15 points.
+
+The completed assessment includes a performance rating, four score cards,
+question-level coaching, strengths, weaknesses, next steps, practice ideas and
+learning resources. Gemini is used when configured, with validated JSON and a
+deterministic evidence-based fallback. Retrieve it with:
+
+```text
+GET /interviews/{interview_id}/assessment
+```
+
+Fresh databases are created automatically. Existing PostgreSQL databases are
+updated safely on startup; the same migration is also available at
+`backend/sql/module7_migration.sql` for manual deployment workflows.
+
+---
+
+## 4. Frontend Setup
+
+The frontend is unchanged in how you run it — serve the `frontend/` folder
+with any static file server, e.g.:
+
+```bash
+cd frontend
+python -m http.server 5500
+```
+
+Then open **http://127.0.0.1:5500/index.html**.
+
+> **Important:** `auth-common.js` hardcodes the backend URL:
+> ```js
+> const API_BASE_URL = "http://127.0.0.1:8000";
+> ```
+> Update this one line if your backend runs somewhere else.
+
+---
+
+## 4b. Running with Docker (optional)
+
+The project also ships a `Dockerfile` per side plus a root `docker-compose.yml`
+(Postgres + backend + a static nginx server for the frontend):
+
+```bash
+cp backend/.env.example backend/.env
+# fill in JWT_SECRET_KEY / SESSION_SECRET_KEY (openssl rand -hex 32 each)
+# leave DATABASE_URL as-is - compose overrides it to point at the postgres service
+
+docker compose up --build
+```
+
+- Frontend: http://localhost:5500
+- Backend / API docs: http://localhost:8000/docs
+- Recordings persist in the `recordings_data` volume; Postgres data in `postgres_data`.
+
+## 4c. API testing with Postman
+
+`backend/postman_collection.json` covers auth, interview generation, and every
+Module 4 `/sessions` endpoint. Import it into Postman, set `base_url`
+(defaults to `http://127.0.0.1:8000`), run **Login** once to populate the
+`token` variable automatically, then the rest of the requests are ready to go.
+
+---
+
+## 5. Google OAuth Setup
+
+1. Go to https://console.cloud.google.com/apis/credentials
+2. Create an **OAuth 2.0 Client ID** → Application type: **Web application**
+3. Add an **Authorized redirect URI**:
+   ```
+   http://localhost:8000/auth/google/callback
+   ```
+4. Copy the generated **Client ID** and **Client Secret** into `backend/.env`:
+   ```
+   GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=xxxxxxxx
+   GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+   ```
+5. Restart the backend.
+
+**How the flow works:**
+`Continue with Google` button → `GET /auth/google` → Google consent screen →
+`GET /auth/google/callback` (backend creates/finds the user) → backend
+redirects to `FRONTEND_URL/index.html?token=...&role=...&name=...` →
+`auth-common.js` reads those query params, saves the session, cleans the
+URL, and redirects to the correct dashboard.
+
+Because Google doesn't tell us which role a brand-new user wants, new
+Google sign-ups default to **candidate**. Change `RoleEnum.candidate` in
+`auth_routes.py`'s `google_callback()` if you'd like different behavior
+(e.g. an extra "choose your role" step).
+
+---
+
+## 6. API Endpoints
+
+| Method | Path                     | Auth required | Description                                  |
+|--------|--------------------------|:--------------:|-----------------------------------------------|
+| POST   | `/register`              | No             | Create account, returns JWT + user            |
+| POST   | `/login`                 | No             | Email/password login, returns JWT + user      |
+| GET    | `/me`                    | Yes            | Return the current authenticated user         |
+| POST   | `/logout`                | Yes            | Confirms logout (JWT is discarded client-side)|
+| GET    | `/verify-token`          | Yes            | Used by dashboards to validate a session       |
+| GET    | `/auth/google`           | No             | Redirects to Google's consent screen          |
+| GET    | `/auth/google/callback`  | No             | Google redirects here; then redirects to frontend |
+| GET    | `/candidate/profile`     | Yes (candidate)| Example role-protected route                  |
+| GET    | `/recruiter/profile`     | Yes (recruiter)| Example role-protected route                  |
+| GET    | `/admin/profile`         | Yes (admin)    | Example role-protected route                  |
+
+All protected routes expect: `Authorization: Bearer <token>`
+
+**Status codes used:** `200` OK · `201` Created · `400` bad input ·
+`401` invalid/expired token or wrong password · `403` wrong role /
+deactivated account · `404` unregistered email · `409` duplicate email ·
+`500` unexpected server error.
+
+**Example — Register**
+```
+POST /register
+{
+  "full_name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "Secret123",
+  "confirm_password": "Secret123",
+  "role": "candidate"
+}
+```
+
+**Example — Login**
+```
+POST /login
+{ "email": "jane@example.com", "password": "Secret123" }
+```
+
+Both return:
+```json
+{
+  "access_token": "eyJ...",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "user": { "id": "...", "full_name": "Jane Doe", "email": "jane@example.com",
+            "role": "candidate", "auth_provider": "local", ... }
+}
+```
+
+---
+
+## 7. Exact Frontend Changes
+
+Nothing in the visual design, CSS, or HTML layout was altered. Every change
+below is additive (a new file, a new `<script>` tag, or a new `id`
+attribute needed to hook up JavaScript) or a rewire of logic that was
+previously fake (`alert("Login Successful!")`) to call the real API.
+
+**New file:**
+- `frontend/auth-common.js` — session storage, `requireAuth()`,
+  `authFetch()`, logout, Google-redirect handling.
+
+**`index.html`**
+- Added `<script src="auth-common.js"></script>` before `script.js`.
+
+**`candidate.html` / `recruiter.html` / `admin.html`**
+- Added `<script src="auth-common.js"></script>` before their own JS file.
+- Added `id="logoutBtn"` to the sidebar **Logout** button.
+- `recruiter.html` / `admin.html`: added `id="welcomeUser"` to the header
+  `<h1>` so the logged-in user's name can be shown (`candidate.html`
+  already had this id).
+
+**`script.js`**
+- `loginFormButton` click handler: now calls `POST /login`, checks the
+  selected role matches the account, stores the session, and redirects
+  to the right dashboard (instead of `alert("Login Successful!")`).
+- `registerButton` click handler: now calls `POST /register`, stores the
+  session, and redirects to the right dashboard.
+- Google button handler: now redirects to `GET /auth/google` instead of
+  showing a placeholder alert.
+- `window.onload`: now also calls `handleGoogleRedirectIfPresent()` (picks
+  up the token after a Google login) and `redirectIfAlreadyLoggedIn()`.
+- All validation messages, timing, and UI behavior are unchanged.
+
+**`candidate.js` / `recruiter.js` / `admin.js`**
+- Added two lines at the very top:
+  ```js
+  requireAuth("candidate");   // "recruiter" / "admin" respectively
+  wireLogoutButton("#logoutBtn");
+  ```
+  This protects the dashboard (redirects to the login page if there's no
+  valid session) and wires up the Logout button. Nothing else in these
+  files was touched.
+
+---
+
+## 8. Session Handling Behavior
+
+- On login/register/Google sign-in, the JWT and user object are stored in
+  `localStorage`.
+- On every dashboard page load, `requireAuth()` re-validates the token
+  against `GET /verify-token`. If it's missing, invalid, or expired, the
+  user is redirected back to the login page automatically.
+- Refreshing a dashboard page keeps the user logged in (token persists in
+  `localStorage`).
+- Clicking **Logout** calls `POST /logout`, then clears `localStorage`
+  and redirects to `index.html`.
+
+---
+
+## 9. Security Notes
+
+- Passwords are **never** stored or returned in plain text — only bcrypt
+  hashes, and `password_hash` is never included in any API response.
+- All database queries go through SQLAlchemy's ORM (parameterized —
+  no raw string SQL, no injection risk).
+- JWTs are signed with `JWT_SECRET_KEY` and expire after
+  `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` (default 60 minutes).
+- CORS is restricted to the origins listed in `CORS_ORIGINS`.
+- All secrets (DB credentials, JWT secret, Google credentials) live only
+  in `.env`, which is git-ignored — never hardcoded in source.
+
+---
+
+## 10. Known Simplifications (documented, not hidden)
+
+- `POST /logout` is a formality — JWTs are stateless, so real invalidation
+  happens client-side by discarding the token. For true server-side
+  revocation you'd add a token-blocklist table (Redis or Postgres).
+- New Google sign-ups default to the `candidate` role, since Google
+  doesn't provide a role. Swap in a "select your role" step post-signup
+  if recruiters/admins need to sign up via Google too.
+- Rate limiting / brute-force protection on `/login` is not included —
+  add `slowapi` or a reverse-proxy rule before production use.
+- **Frontend stays plain HTML/CSS/JS on purpose.** The Module 4 spec's
+  tech-stack table lists React.js, but this project intentionally keeps
+  the existing vanilla frontend rather than migrating - all the Module 4
+  behavior (device access, recording, timer, pause/resume, full-screen
+  proctoring) is framework-agnostic and works the same either way.
+- **File storage is local disk, not S3/Azure**, since no cloud credentials
+  are assumed for local grading/running. Every read/write goes through
+  `backend/app/storage.py`, a single choke point - swapping in S3/Azure
+  later means implementing one class with `save/delete/url_for` there,
+  not touching the routes.
+- FFmpeg-based video/audio post-processing (the spec lists it as
+  optional) isn't implemented - recordings are stored exactly as the
+  browser's `MediaRecorder` produces them (webm/mp4).
+- **Module 6's RNN rolling-window state is in-process memory**
+  (`backend/app/ml/engagement_engine.py`, a dict keyed by session id),
+  fine for this project's scope (a single backend process). Scaling to
+  multiple backend workers would move that state to Redis - noted in
+  that file rather than hidden.
+- **Module 6's RNN is bootstrapped on synthetic behavior sequences**,
+  not real labeled interviews - documented in detail in
+  `backend/app/ml/train_engagement_rnn.py`. Treat its engagement/risk
+  scores as a reasonable heuristic, not a certified assessment; the
+  proctoring flags it confirms are informational for recruiter review
+  and never auto-submit the interview.
+## Notifications and reports
+
+The recruiter resume-visibility fix and **Notifications & Reports** are included.
+Open that module from a dashboard sidebar. Email delivery uses the `SMTP_*`
+settings in `backend/.env`; in-app notifications continue to work without SMTP.
